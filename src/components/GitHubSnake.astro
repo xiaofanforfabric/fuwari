@@ -1,0 +1,73 @@
+---
+import fs from "node:fs";
+import path from "node:path";
+import { Icon } from "astro-icon/components";
+
+interface Props {
+	class?: string;
+	style?: string;
+}
+
+const { class: className, style } = Astro.props;
+
+/**
+ * 展示模式：
+ *   "svg" —— 明/暗两套 SVG，会跟随站点主题切换，矢量清晰、体积小（推荐）
+ *   "gif" —— 单个 GIF，不随主题变色，但可以随意转发/贴到 GitHub README
+ */
+const MODE: "svg" | "gif" = "svg";
+
+const snakeDir = path.join(process.cwd(), "public", "snake");
+const exists = (f: string) => fs.existsSync(path.join(snakeDir, f));
+
+const hasLight = exists("snake.svg");
+const hasDark = exists("snake-dark.svg");
+const hasGif = exists("snake.gif");
+
+const mode: "svg" | "gif" | null =
+	MODE === "svg" ? (hasLight || hasDark ? "svg" : null) : hasGif ? "gif" : null;
+---
+
+{
+	mode ? (
+		<div class:list={["card-base card-shadow mb-4 px-5 py-4", className]} style={style}>
+			<div class="mb-3 flex items-center gap-2">
+				<Icon name="fa6-solid:gamepad" class="text-[var(--primary)]" />
+				<span class="font-bold text-90">GitHub 贡献</span>
+				<a
+					href="https://github.com/xiaofanforfabric"
+					target="_blank"
+					rel="noopener noreferrer"
+					class="ml-auto flex items-center gap-1 text-xs text-50 transition hover:text-[var(--primary)]"
+				>
+					<Icon name="fa6-brands:github" />
+					<span>@xiaofanforfabric</span>
+				</a>
+			</div>
+
+			<div class="overflow-hidden rounded-xl">
+				{mode === "svg" ? (
+					<>
+						{/* Fuwari 是 class 式暗色模式，所以用 dark:hidden / dark:block 而非 prefers-color-scheme */}
+						{hasLight && <img src="/snake/snake.svg" alt="GitHub 贡献蛇动画" class="w-full dark:hidden" />}
+						{hasDark && <img src="/snake/snake-dark.svg" alt="GitHub 贡献蛇动画" class="hidden w-full dark:block" />}
+					</>
+				) : (
+					<img src="/snake/snake.gif" alt="GitHub 贡献蛇动画" class="w-full" />
+				)}
+			</div>
+		</div>
+	) : (
+		<div class:list={["card-base card-shadow mb-4 px-5 py-4", className]} style={style}>
+			<div class="mb-3 flex items-center gap-2">
+				<Icon name="fa6-solid:gamepad" class="text-[var(--primary)]" />
+				<span class="font-bold text-90">GitHub 贡献</span>
+			</div>
+			<p class="text-sm text-50">
+				贡献蛇动画还没生成。在仓库根目录执行
+				<code class="rounded bg-[var(--btn-regular-bg)] px-1">scripts/snake-mock-fetch.mjs</code>
+				即可离线生成（无需 Token）。
+			</p>
+		</div>
+	)
+}

@@ -1,7 +1,9 @@
 ---
 import type { GetStaticPaths } from "astro";
 import Pagination from "../components/control/Pagination.astro";
+import GitHubSnake from "../components/GitHubSnake.astro";
 import PostPage from "../components/PostPage.astro";
+import Works from "../components/Works.astro";
 import { PAGE_SIZE } from "../constants/constants";
 import MainGridLayout from "../layouts/MainGridLayout.astro";
 import { getSortedPosts } from "../utils/content-utils";
@@ -18,6 +20,8 @@ const len = page.data.length;
 ---
 
 <MainGridLayout>
+    {page.currentPage === 1 && <Works class="onload-animation" style="animation-delay: calc(var(--content-delay) + 0ms)" />}
+    {page.currentPage === 1 && <GitHubSnake class="onload-animation" style="animation-delay: calc(var(--content-delay) + 50ms)" />}
     <PostPage page={page}></PostPage>
     <Pagination class="mx-auto onload-animation" page={page} style={`animation-delay: calc(var(--content-delay) + ${(len)*50}ms)`}></Pagination>
 </MainGridLayout>

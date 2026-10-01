@@ -1,0 +1,89 @@
+---
+import { Icon } from "astro-icon/components";
+import { langColors, works } from "../data/works";
+
+interface Props {
+	class?: string;
+	style?: string;
+}
+
+const { class: className, style } = Astro.props;
+
+const resolved = works.map((w) => ({
+	...w,
+	// 有官网就优先跳官网（仓库可能还没开源），否则跳 GitHub
+	href: w.url ?? (w.repo ? `https://github.com/${w.repo}` : "#"),
+	dot: w.lang ? (langColors[w.lang] ?? "var(--primary)") : undefined,
+	// 卡片跳的是官网时，把仓库地址作为文字显示出来
+	showRepoText: Boolean(w.url && w.repo),
+}));
+---
+
+{
+	resolved.length > 0 && (
+		<div class:list={["card-base card-shadow mb-4 px-5 py-4", className]} style={style}>
+			<div class="mb-3 flex items-center gap-2">
+				<Icon name="fa6-solid:star" class="text-[var(--primary)]" />
+				<span class="font-bold text-90">我的作品</span>
+				<span class="text-xs text-50">({resolved.length})</span>
+			</div>
+
+			<div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+				{resolved.map((w) => (
+					<a
+						href={w.href}
+						target="_blank"
+						rel="noopener noreferrer"
+						class="btn-card group flex flex-col gap-1.5 rounded-xl border border-dashed border-black/10 p-3 dark:border-white/15"
+					>
+						<div class="flex items-center gap-2">
+							<Icon
+								name={w.repo ? "fa6-brands:github" : "fa6-solid:globe"}
+								class="shrink-0 text-[var(--primary)]"
+							/>
+							<span class="truncate font-bold text-90 transition group-hover:text-[var(--primary)]">
+								{w.name}
+							</span>
+							{w.stars !== undefined && (
+								<span class="ml-auto flex shrink-0 items-center gap-1 text-xs text-50">
+									<Icon name="fa6-solid:star" />
+									{w.stars}
+								</span>
+							)}
+						</div>
+
+						<p class="line-clamp-3 text-sm text-75">{w.desc}</p>
+
+						{w.note && (
+							<div class="flex items-center gap-1 text-xs text-[var(--primary)]">
+								<Icon name="fa6-solid:circle-info" />
+								<span>{w.note}</span>
+							</div>
+						)}
+
+						<div class="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-xs text-50">
+							{w.dot && (
+								<span class="flex items-center gap-1.5">
+									<span
+										class="inline-block h-2.5 w-2.5 rounded-full"
+										style={`background-color:${w.dot}`}
+									/>
+									{w.lang}
+								</span>
+							)}
+							{w.tags?.map((t) => (
+								<span class="rounded-md bg-[var(--btn-regular-bg)] px-1.5 py-0.5">{t}</span>
+							))}
+							{w.showRepoText && (
+								<span class="ml-auto flex items-center gap-1 opacity-70">
+									<Icon name="fa6-brands:github" />
+									{w.repo}
+								</span>
+							)}
+						</div>
+					</a>
+				))}
+			</div>
+		</div>
+	)
+}

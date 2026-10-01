@@ -35,6 +35,18 @@ export type SiteConfig = {
 		depth: 1 | 2 | 3;
 	};
 
+	/**
+	 * 中国大陆备案信息（可选）。
+	 * 只有托管在中国大陆服务器时才需要；托管在 Vercel / Cloudflare Pages
+	 * 等境外平台无需备案，保持不填即可（页脚不会显示任何内容）。
+	 */
+	icp?: {
+		number: string; // ICP 备案号，如 "陕ICP备2026018433号"
+		url?: string; // 默认跳转工信部 https://beian.miit.gov.cn/
+		police?: string; // 公安联网备案号，如 "陕公网安备61100202000217号"
+		policeUrl?: string; // 默认跳转 https://beian.mps.gov.cn/
+	};
+
 	favicon: Favicon[];
 };
 

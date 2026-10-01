@@ -1,0 +1,30 @@
+---
+import { Icon } from "astro-icon/components";
+import MainGridLayout from "../layouts/MainGridLayout.astro";
+
+const title = "页面不存在";
+---
+
+<MainGridLayout title={title} description="你要找的页面不存在">
+    <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
+        <div class="card-base z-10 px-9 py-12 relative w-full flex flex-col items-center justify-center text-center">
+            <div class="text-6xl font-bold text-[var(--primary)] mb-2">404</div>
+
+            <div class="mb-1 text-lg font-bold text-90">这个页面不见了</div>
+            <p class="mb-6 text-sm text-75">
+                可能是链接失效了，或者这篇文章还没写。
+            </p>
+
+            <div class="flex flex-wrap items-center justify-center gap-3">
+                <a href="/" class="btn-regular rounded-lg h-10 gap-2 px-5 text-sm font-bold text-white bg-[var(--primary)] flex items-center">
+                    <Icon name="fa6-solid:house" />
+                    <span>返回首页</span>
+                </a>
+                <a href="/archive/" class="btn-regular rounded-lg h-10 gap-2 px-5 text-sm font-bold flex items-center">
+                    <Icon name="fa6-solid:box-archive" />
+                    <span>看看归档</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</MainGridLayout>
