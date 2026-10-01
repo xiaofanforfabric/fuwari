@@ -1,0 +1,75 @@
+name: Deploy to Aliyun OSS
+
+# 推送到 main 分支时自动构建并同步到阿里云 OSS（香港 Bucket）
+# 也可以在 Actions 页面手动触发（workflow_dispatch）
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# 同一时间只跑一个部署，新的推送会取消正在进行的旧部署
+concurrency:
+  group: deploy-oss
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Install ossutil
+        run: |
+          curl -sL -o ossutil.zip \
+            https://gosspublic.alicdn.com/ossutil/v2/2.1.1/ossutil-2.1.1-linux-amd64.zip
+          unzip -oq ossutil.zip
+          sudo mv ossutil-2.1.1-linux-amd64/ossutil /usr/local/bin/ossutil
+          sudo chmod +x /usr/local/bin/ossutil
+          ossutil version
+
+      - name: Sync to OSS
+        env:
+          OSS_ENDPOINT: ${{ secrets.ALIYUN_OSS_ENDPOINT }}
+          OSS_BUCKET: ${{ secrets.ALIYUN_OSS_BUCKET }}
+          OSS_ACCESS_KEY_ID: ${{ secrets.ALIYUN_ACCESS_KEY_ID }}
+          OSS_ACCESS_KEY_SECRET: ${{ secrets.ALIYUN_ACCESS_KEY_SECRET }}
+        run: |
+          # 公共参数
+          ARGS="-e $OSS_ENDPOINT -i $OSS_ACCESS_KEY_ID -k $OSS_ACCESS_KEY_SECRET --force"
+
+          # 1) 全量同步（--delete 会清掉 OSS 上已不存在的旧文件）
+          ossutil sync dist/ oss://$OSS_BUCKET/ $ARGS --delete
+
+          # 2) _astro 下的文件名带内容哈希，可以永久缓存
+          ossutil sync dist/_astro/ oss://$OSS_BUCKET/_astro/ $ARGS \
+            --cache-control "public, max-age=31536000, immutable"
+
+          # 3) pagefind 搜索索引文件名不带哈希，用较短的缓存
+          ossutil sync dist/pagefind/ oss://$OSS_BUCKET/pagefind/ $ARGS \
+            --cache-control "public, max-age=604800"
+
+      - name: Summary
+        run: |
+          echo "### 部署完成 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- 域名：https://www.xiaofan.org.cn/" >> $GITHUB_STEP_SUMMARY
+          echo "- 构建产物：$(find dist -type f | wc -l) 个文件 / $(du -sh dist | cut -f1)" >> $GITHUB_STEP_SUMMARY
+          echo "- 提交：\`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY

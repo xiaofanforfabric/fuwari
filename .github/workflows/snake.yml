@@ -1,0 +1,54 @@
+name: Generate Snake
+
+# 每天自动重新生成"贪吃蛇吃贡献格子"动画
+# 结果提交到 public/snake/，随后由 deploy-oss 工作流一起部署到自己的域名
+on:
+  schedule:
+    # UTC 00:00 = 北京时间 08:00
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    # 自己产生的提交不再触发自己，避免循环
+    paths-ignore:
+      - "public/snake/**"
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate snake
+        uses: Platane/snk@v3
+        with:
+          github_user_name: xiaofanforfabric
+          outputs: |
+            snake-dist/snake.svg
+            snake-dist/snake-dark.svg?palette=github-dark
+            snake-dist/snake.gif?color_background=#ffffff
+
+      - name: Copy into public/
+        run: |
+          mkdir -p public/snake
+          cp snake-dist/snake.svg       public/snake/snake.svg
+          cp snake-dist/snake-dark.svg  public/snake/snake-dark.svg
+          cp snake-dist/snake.gif       public/snake/snake.gif
+          ls -la public/snake
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/snake
+          if git diff --staged --quiet; then
+            echo "贡献格子没有变化，跳过提交"
+          else
+            git commit -m "chore(snake): 更新贡献蛇动画"
+            git push
+          fi
